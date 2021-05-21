@@ -17,10 +17,12 @@
     <failOnMissingWebXml>false</failOnMissingWebXml>
     <javaee.api.version>8.0</javaee.api.version>
     <liberty.bootstrap.artifactId>${project.artifactId}</liberty.bootstrap.artifactId>
+    <login.server>${env.LOGIN_SERVER}</login.server>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <replicas>3</replicas>
   </properties>
 
   <dependencies>
@@ -56,6 +58,22 @@
               <resources>          
                 <resource>
                   <directory>src/main/docker</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>              
+            </configuration>            
+          </execution>
+          <execution>
+            <id>02-aks-config</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}/target</outputDirectory>
+              <resources>          
+                <resource>
+                  <directory>src/main/aks</directory>
                   <filtering>true</filtering>
                 </resource>
               </resources>              
