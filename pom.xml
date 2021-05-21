@@ -6,7 +6,7 @@
 
   <artifactId>javaee-cafe</artifactId>
   <groupId>javaee-cafe</groupId>
-  <version>0.1-SNAPSHOT</version>
+  <version>1.0.20</version>
   <packaging>war</packaging>
   <name>${project.artifactId}</name>
   <description>This is the basic Java EE application used in the demo.
@@ -17,12 +17,16 @@
     <failOnMissingWebXml>false</failOnMissingWebXml>
     <javaee.api.version>8.0</javaee.api.version>
     <liberty.bootstrap.artifactId>${project.artifactId}</liberty.bootstrap.artifactId>
-    <login.server>${env.LOGIN_SERVER}</login.server>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
+    <param.login.server>${env.LOGIN_SERVER}</param.login.server>
+    <param.registry.name>${env.REGISTRY_NAME}</param.registry.name>
+    <param.password>${env.PASSWORD}</param.password>
+    <param.pull.secret.name>acr-secret</param.pull.secret.name>
+    <param.user.name>${env.USER_NAME}</param.user.name>
+    <param.replicas>3</param.replicas>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <replicas>3</replicas>
   </properties>
 
   <dependencies>
@@ -43,6 +47,61 @@
   <build>
     <finalName>${project.artifactId}</finalName>
     <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.6.0</version>
+        <executions>
+          <execution>
+            <id>00-delete-secret</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <workingDirectory>${project.build.directory}</workingDirectory>
+              <executable>kubectl</executable>
+              <commandlineArgs>delete secret docker-registry ${param.pull.secret.name} --ignore-not-found</commandlineArgs>
+            </configuration>
+          </execution>
+          <execution>
+            <id>01-create-secret</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <workingDirectory>${project.build.directory}</workingDirectory>
+              <executable>kubectl</executable>
+              <commandlineArgs>create secret docker-registry ${param.pull.secret.name} --docker-server=${param.login.server} --docker-username=${param.user.name} --docker-password=${param.password}</commandlineArgs>
+            </configuration>
+          </execution>
+          <execution>
+            <id>02-acr-build</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <workingDirectory>${project.build.directory}</workingDirectory>
+              <executable>az</executable>
+              <commandlineArgs>acr build -t ${project.artifactId}:${project.version} -r ${param.registry.name} .</commandlineArgs>
+            </configuration>
+          </execution>
+          <execution>
+            <id>03-kubectl-apply</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <workingDirectory>${project.build.directory}/..</workingDirectory>
+              <executable>kubectl</executable>
+              <commandlineArgs>apply -f ${project.build.directory}/openlibertyapplication.yaml</commandlineArgs>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
         <version>3.2.0</version>

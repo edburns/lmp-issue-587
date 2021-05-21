@@ -3,10 +3,10 @@ kind: OpenLibertyApplication
 metadata:
   name: ${project.artifactId}-cluster
 spec:
-  replicas: ${replicas}
-  applicationImage: ${login.server}/${project.artifactId}:${project.version}
+  param.replicas: ${param.replicas}
+  applicationImage: ${param.login.server}/${project.artifactId}:${project.version}
   pullPolicy: Always
-  pullSecret: acr-secret
+  pullSecret: ${param.pull.secret.name}
   service:
     type: LoadBalancer
     targetPort: 9080
